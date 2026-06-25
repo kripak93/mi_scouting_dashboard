@@ -42,6 +42,11 @@ if df.empty:
 
 # ── Sidebar Filters ──
 st.sidebar.markdown("### 🔍 Filters")
+
+# Team filter (MI Men / MI Women) — prominent at top
+teams_available = sorted(df["team"].dropna().unique().tolist()) if "team" in df.columns else []
+team_filter = st.sidebar.radio("Team", ["All"] + teams_available, index=0)
+
 grades_available = sorted(df["currentGrade"].dropna().unique().tolist()) if "currentGrade" in df.columns else []
 grade_filter = st.sidebar.multiselect("Grade", grades_available, default=grades_available)
 recs_available = sorted(df["recommendation"].dropna().unique().tolist()) if "recommendation" in df.columns else []
@@ -52,6 +57,8 @@ specs_available = sorted(df["specialism"].dropna().unique().tolist()) if "specia
 spec_filter = st.sidebar.multiselect("Specialism", specs_available, default=specs_available)
 
 filtered = df.copy()
+if team_filter != "All" and "team" in filtered.columns:
+    filtered = filtered[filtered["team"] == team_filter]
 if "currentGrade" in filtered.columns:
     filtered = filtered[filtered["currentGrade"].isin(grade_filter)]
 if "recommendation" in filtered.columns:
@@ -62,6 +69,12 @@ if "specialism" in filtered.columns:
     filtered = filtered[filtered["specialism"].isin(spec_filter)]
 
 st.caption(f"Showing {len(filtered)} of {len(df)} reports")
+
+# ── Export CSV ──
+if len(filtered) > 0:
+    csv = filtered.to_csv(index=False).encode("utf-8")
+    st.sidebar.download_button("📥 Export to CSV", csv, "scout_reports.csv", "text/csv")
+
 st.markdown("---")
 
 # ── KPIs ──
