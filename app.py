@@ -185,3 +185,43 @@ st.markdown("---")
 if st.button("🔄 Refresh data"):
     read_all_reports.clear()
     st.rerun()
+
+
+# ══════════════════════════════════════
+# MEDIA BROWSER
+# ══════════════════════════════════════
+st.markdown("---")
+st.markdown("### 📁 Media Browser")
+st.caption("Browse all uploaded videos and photos by player")
+
+R2_PUBLIC_URL = "https://pub-baf64f6313b2499eae38dee9c711ffb3.r2.dev"
+
+# Get media links from the sheet data
+if "mediaFileLinks" in filtered.columns:
+    media_df = filtered[filtered["mediaFileLinks"].fillna("").str.strip() != ""]
+    if len(media_df) > 0:
+        # Group by player
+        players_with_media = {}
+        for _, row in media_df.iterrows():
+            name = f"{row.get('firstName', '')} {row.get('lastName', '')}".strip()
+            links = str(row["mediaFileLinks"]).split(", ")
+            if name not in players_with_media:
+                players_with_media[name] = []
+            players_with_media[name].extend(links)
+
+        st.write(f"**{len(players_with_media)} players** with uploaded media")
+
+        for player, links in sorted(players_with_media.items()):
+            with st.expander(f"📂 {player} ({len(links)} files)"):
+                for link in links:
+                    filename = link.split("/")[-1] if "/" in link else link
+                    is_video = any(ext in filename.lower() for ext in [".mp4", ".mov", ".avi", ".webm"])
+                    if is_video:
+                        st.video(link)
+                    else:
+                        st.image(link, width=300)
+                    st.caption(f"[⬇ Download]({link})")
+    else:
+        st.info("No media uploaded yet.")
+else:
+    st.info("No media column found in the data.")
