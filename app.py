@@ -36,6 +36,13 @@ if not st.session_state.dashboard_authenticated:
 st.markdown("## 📊 MI Cricket Intelligence — Scouting Dashboard")
 df = read_all_reports()
 
+# Deduplicate: keep latest report per player (by submittedAt)
+if not df.empty and "firstName" in df.columns and "lastName" in df.columns:
+    if "submittedAt" in df.columns:
+        df = df.sort_values("submittedAt", ascending=False).drop_duplicates(
+            subset=["firstName", "lastName"], keep="first"
+        ).reset_index(drop=True)
+
 if df.empty:
     st.info("No reports yet. File your first report from the Scouting Form.")
     st.stop()
